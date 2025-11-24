@@ -127,7 +127,7 @@ void inserirFinal(No** cabeca, int valor) {
     printf("Valor %d inserido no final.\n", valor);
 }
 
-// 3. Inserir em uma posição específica (base 1)
+// 3. Inserir em uma posição específica
 void inserirPosicao(No** cabeca, int valor, int posicao) {
     if (posicao < 1) {
         printf("Posicao invalida!\n");
@@ -165,7 +165,7 @@ void inserirPosicao(No** cabeca, int valor, int posicao) {
     }
 }
 
-// 4. Remover de uma posição específica (base 1)
+// 4. Remover de uma posição específica
 void removerPosicao(No** cabeca, int posicao) {
     if (*cabeca == NULL) {
         printf("A lista esta vazia.\n");
