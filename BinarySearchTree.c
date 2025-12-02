@@ -1,3 +1,11 @@
+/*
+GRUPO:
+1 - DIEGO MACIEL
+2 - MÁRLESON
+3 - LUCAS
+*/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 
