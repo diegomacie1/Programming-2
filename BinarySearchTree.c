@@ -1,6 +1,6 @@
 /*
 ====================================================================
-    UNIVERSIDADE FEDERAL DO AMAPÁ – IFAP
+    UNIVERSIDADE FEDERAL DO AMAPÁ – UNIFAP
     Curso: Bacharelado em Ciência da Computação
     Disciplina: Programação II
 
@@ -315,3 +315,4 @@ void menuPercorrer(No *raiz)
     }
     printf("\n");
 }
+
