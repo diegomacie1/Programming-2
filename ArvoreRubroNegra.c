@@ -2,358 +2,361 @@
 #include <stdlib.h>
 
 // Definição das cores
-enum Color { VERMELHO, PRETO };
+enum Cor { VERMELHO, PRETO };
 
-// Estrutura do Nó
-typedef struct Node {
-    int data;
-    enum Color color;
-    struct Node *left, *right, *parent;
-} Node;
+// Estrutura do Nó (No)
+typedef struct No {
+    int valor;
+    enum Cor cor;
+    struct No *esquerda, *direita, *pai;
+} No;
 
-// Estrutura da Árvore
-typedef struct RBTree {
-    Node *root;
-    Node *TNULL; // Sentinela (substitui o NULL)
-} RBTree;
+// Estrutura da Árvore (ArvoreRB)
+typedef struct ArvoreRB {
+    No *raiz;
+    No *TNULL; // Sentinela (Substitui o NULL)
+} ArvoreRB;
 
 // --- Protótipos das Funções ---
-RBTree* criarArvore();
-void inicializarTNULL(Node *node, Node *parent);
-void leftRotate(RBTree *t, Node *x);
-void rightRotate(RBTree *t, Node *x);
-void inserir(RBTree *t, int key);
-void inserirFixUp(RBTree *t, Node *k);
-void remover(RBTree *t, int data);
-void removerFixUp(RBTree *t, Node *x);
-void transplant(RBTree *t, Node *u, Node *v);
-Node* minimum(RBTree *t, Node *node);
-Node* buscar(RBTree *t, Node *node, int data);
-void preOrdem(RBTree *t, Node *node);
-void emOrdem(RBTree *t, Node *node);
-void posOrdem(RBTree *t, Node *node);
-void menu(RBTree *t);
+ArvoreRB* criarArvore();
+void rotacaoEsquerda(ArvoreRB *arvore, No *x);
+void rotacaoDireita(ArvoreRB *arvore, No *x);
+void inserir(ArvoreRB *arvore, int valor);
+void balancearInsercao(ArvoreRB *arvore, No *k);
+void remover(ArvoreRB *arvore, int valor);
+void balancearRemocao(ArvoreRB *arvore, No *x);
+void transplantar(ArvoreRB *arvore, No *u, No *v);
+No* minimo(ArvoreRB *arvore, No *no);
+No* buscar(ArvoreRB *arvore, No *no, int valor);
+void preOrdem(ArvoreRB *arvore, No *no);
+void emOrdem(ArvoreRB *arvore, No *no);
+void posOrdem(ArvoreRB *arvore, No *no);
+void menu(ArvoreRB *arvore);
 
 // --- Implementação ---
 
 // Inicializa a árvore e o nó Sentinela
-RBTree* criarArvore() {
-    RBTree *t = (RBTree*)malloc(sizeof(RBTree));
-    t->TNULL = (Node*)malloc(sizeof(Node));
-    t->TNULL->color = PRETO;
-    t->TNULL->left = NULL;
-    t->TNULL->right = NULL;
-    t->root = t->TNULL;
-    return t;
+ArvoreRB* criarArvore() {
+    ArvoreRB *arvore = (ArvoreRB*)malloc(sizeof(ArvoreRB));
+    
+    // Aloca memória para o TNULL
+    arvore->TNULL = (No*)malloc(sizeof(No));
+    arvore->TNULL->cor = PRETO;
+    arvore->TNULL->esquerda = NULL;
+    arvore->TNULL->direita = NULL;
+    
+    // A raiz aponta inicialmente para TNULL
+    arvore->raiz = arvore->TNULL;
+    return arvore;
 }
 
 // Rotação para a Esquerda
-void leftRotate(RBTree *t, Node *x) {
-    Node *y = x->right;
-    x->right = y->left;
-    if (y->left != t->TNULL) {
-        y->left->parent = x;
+void rotacaoEsquerda(ArvoreRB *arvore, No *x) {
+    No *y = x->direita;
+    x->direita = y->esquerda;
+    if (y->esquerda != arvore->TNULL) {
+        y->esquerda->pai = x;
     }
-    y->parent = x->parent;
-    if (x->parent == NULL) {
-        t->root = y;
-    } else if (x == x->parent->left) {
-        x->parent->left = y;
+    y->pai = x->pai;
+    if (x->pai == NULL) {
+        arvore->raiz = y;
+    } else if (x == x->pai->esquerda) {
+        x->pai->esquerda = y;
     } else {
-        x->parent->right = y;
+        x->pai->direita = y;
     }
-    y->left = x;
-    x->parent = y;
+    y->esquerda = x;
+    x->pai = y;
 }
 
 // Rotação para a Direita
-void rightRotate(RBTree *t, Node *x) {
-    Node *y = x->left;
-    x->left = y->right;
-    if (y->right != t->TNULL) {
-        y->right->parent = x;
+void rotacaoDireita(ArvoreRB *arvore, No *x) {
+    No *y = x->esquerda;
+    x->esquerda = y->direita;
+    if (y->direita != arvore->TNULL) {
+        y->direita->pai = x;
     }
-    y->parent = x->parent;
-    if (x->parent == NULL) {
-        t->root = y;
-    } else if (x == x->parent->right) {
-        x->parent->right = y;
+    y->pai = x->pai;
+    if (x->pai == NULL) {
+        arvore->raiz = y;
+    } else if (x == x->pai->direita) {
+        x->pai->direita = y;
     } else {
-        x->parent->left = y;
+        x->pai->esquerda = y;
     }
-    y->right = x;
-    x->parent = y;
+    y->direita = x;
+    x->pai = y;
 }
 
-// Correção após Inserção
-void inserirFixUp(RBTree *t, Node *k) {
-    Node *u;
-    while (k->parent->color == VERMELHO) {
-        if (k->parent == k->parent->parent->right) {
-            u = k->parent->parent->left; // Tio
-            if (u->color == VERMELHO) {
+// Correção após Inserção (Balanceamento)
+void balancearInsercao(ArvoreRB *arvore, No *k) {
+    No *tio;
+    while (k->pai->cor == VERMELHO) {
+        if (k->pai == k->pai->pai->direita) {
+            tio = k->pai->pai->esquerda; 
+            if (tio->cor == VERMELHO) {
                 // Caso 1: Tio é vermelho
-                u->color = PRETO;
-                k->parent->color = PRETO;
-                k->parent->parent->color = VERMELHO;
-                k = k->parent->parent;
+                tio->cor = PRETO;
+                k->pai->cor = PRETO;
+                k->pai->pai->cor = VERMELHO;
+                k = k->pai->pai;
             } else {
-                if (k == k->parent->left) {
+                if (k == k->pai->esquerda) {
                     // Caso 2: Tio é preto e k é filho à esquerda (Triângulo)
-                    k = k->parent;
-                    rightRotate(t, k);
+                    k = k->pai;
+                    rotacaoDireita(arvore, k);
                 }
                 // Caso 3: Tio é preto e k é filho à direita (Linha)
-                k->parent->color = PRETO;
-                k->parent->parent->color = VERMELHO;
-                leftRotate(t, k->parent->parent);
+                k->pai->cor = PRETO;
+                k->pai->pai->cor = VERMELHO;
+                rotacaoEsquerda(arvore, k->pai->pai);
             }
         } else {
-            u = k->parent->parent->right; // Tio
-            if (u->color == VERMELHO) {
+            tio = k->pai->pai->direita; 
+            if (tio->cor == VERMELHO) {
                 // Caso 1 espelhado
-                u->color = PRETO;
-                k->parent->color = PRETO;
-                k->parent->parent->color = VERMELHO;
-                k = k->parent->parent;
+                tio->cor = PRETO;
+                k->pai->cor = PRETO;
+                k->pai->pai->cor = VERMELHO;
+                k = k->pai->pai;
             } else {
-                if (k == k->parent->right) {
+                if (k == k->pai->direita) {
                     // Caso 2 espelhado
-                    k = k->parent;
-                    leftRotate(t, k);
+                    k = k->pai;
+                    rotacaoEsquerda(arvore, k);
                 }
                 // Caso 3 espelhado
-                k->parent->color = PRETO;
-                k->parent->parent->color = VERMELHO;
-                rightRotate(t, k->parent->parent);
+                k->pai->cor = PRETO;
+                k->pai->pai->cor = VERMELHO;
+                rotacaoDireita(arvore, k->pai->pai);
             }
         }
-        if (k == t->root) break;
+        if (k == arvore->raiz) break;
     }
-    t->root->color = PRETO;
+    arvore->raiz->cor = PRETO;
 }
 
 // Inserção Principal
-void inserir(RBTree *t, int key) {
-    Node *node = (Node*)malloc(sizeof(Node));
-    node->parent = NULL;
-    node->data = key;
-    node->left = t->TNULL;
-    node->right = t->TNULL;
-    node->color = VERMELHO; // Novos nós são sempre vermelhos
+void inserir(ArvoreRB *arvore, int valor) {
+    No *novo = (No*)malloc(sizeof(No));
+    novo->pai = NULL;
+    novo->valor = valor;
+    novo->esquerda = arvore->TNULL;
+    novo->direita = arvore->TNULL;
+    novo->cor = VERMELHO; // Novos nós são sempre vermelhos
 
-    Node *y = NULL;
-    Node *x = t->root;
+    No *y = NULL;
+    No *x = arvore->raiz;
 
-    while (x != t->TNULL) {
+    while (x != arvore->TNULL) {
         y = x;
-        if (node->data < x->data) {
-            x = x->left;
+        if (novo->valor < x->valor) {
+            x = x->esquerda;
         } else {
-            x = x->right;
+            x = x->direita;
         }
     }
 
-    node->parent = y;
+    novo->pai = y;
     if (y == NULL) {
-        t->root = node;
-    } else if (node->data < y->data) {
-        y->left = node;
+        arvore->raiz = novo;
+    } else if (novo->valor < y->valor) {
+        y->esquerda = novo;
     } else {
-        y->right = node;
+        y->direita = novo;
     }
 
-    if (node->parent == NULL) {
-        node->color = PRETO;
+    if (novo->pai == NULL) {
+        novo->cor = PRETO;
         return;
     }
 
-    if (node->parent->parent == NULL) {
+    if (novo->pai->pai == NULL) {
         return;
     }
 
-    inserirFixUp(t, node);
+    balancearInsercao(arvore, novo);
 }
 
 // Auxiliar: Transplante de nós (usado na remoção)
-void transplant(RBTree *t, Node *u, Node *v) {
-    if (u->parent == NULL) {
-        t->root = v;
-    } else if (u == u->parent->left) {
-        u->parent->left = v;
+void transplantar(ArvoreRB *arvore, No *u, No *v) {
+    if (u->pai == NULL) {
+        arvore->raiz = v;
+    } else if (u == u->pai->esquerda) {
+        u->pai->esquerda = v;
     } else {
-        u->parent->right = v;
+        u->pai->direita = v;
     }
-    v->parent = u->parent;
+    v->pai = u->pai;
 }
 
 // Auxiliar: Encontrar mínimo
-Node* minimum(RBTree *t, Node *node) {
-    while (node->left != t->TNULL) {
-        node = node->left;
+No* minimo(ArvoreRB *arvore, No *no) {
+    while (no->esquerda != arvore->TNULL) {
+        no = no->esquerda;
     }
-    return node;
+    return no;
 }
 
 // Correção após Remoção (O caso mais complexo da RB Tree)
-void removerFixUp(RBTree *t, Node *x) {
-    Node *s;
-    while (x != t->root && x->color == PRETO) {
-        if (x == x->parent->left) {
-            s = x->parent->right;
+void balancearRemocao(ArvoreRB *arvore, No *x) {
+    No *irmao;
+    while (x != arvore->raiz && x->cor == PRETO) {
+        if (x == x->pai->esquerda) {
+            irmao = x->pai->direita;
             // Caso 1: Irmão é vermelho
-            if (s->color == VERMELHO) {
-                s->color = PRETO;
-                x->parent->color = VERMELHO;
-                leftRotate(t, x->parent);
-                s = x->parent->right;
+            if (irmao->cor == VERMELHO) {
+                irmao->cor = PRETO;
+                x->pai->cor = VERMELHO;
+                rotacaoEsquerda(arvore, x->pai);
+                irmao = x->pai->direita;
             }
             // Caso 2: Irmão é preto e ambos sobrinhos são pretos
-            if (s->left->color == PRETO && s->right->color == PRETO) {
-                s->color = VERMELHO;
-                x = x->parent;
+            if (irmao->esquerda->cor == PRETO && irmao->direita->cor == PRETO) {
+                irmao->cor = VERMELHO;
+                x = x->pai;
             } else {
                 // Caso 3: Irmão preto, sobrinho esquerdo vermelho, direito preto
-                if (s->right->color == PRETO) {
-                    s->left->color = PRETO;
-                    s->color = VERMELHO;
-                    rightRotate(t, s);
-                    s = x->parent->right;
+                if (irmao->direita->cor == PRETO) {
+                    irmao->esquerda->cor = PRETO;
+                    irmao->cor = VERMELHO;
+                    rotacaoDireita(arvore, irmao);
+                    irmao = x->pai->direita;
                 }
                 // Caso 4: Irmão preto, sobrinho direito vermelho
-                s->color = x->parent->color;
-                x->parent->color = PRETO;
-                s->right->color = PRETO;
-                leftRotate(t, x->parent);
-                x = t->root;
+                irmao->cor = x->pai->cor;
+                x->pai->cor = PRETO;
+                irmao->direita->cor = PRETO;
+                rotacaoEsquerda(arvore, x->pai);
+                x = arvore->raiz;
             }
         } else { // Simétrico (espelhado)
-            s = x->parent->left;
-            if (s->color == VERMELHO) {
-                s->color = PRETO;
-                x->parent->color = VERMELHO;
-                rightRotate(t, x->parent);
-                s = x->parent->left;
+            irmao = x->pai->esquerda;
+            if (irmao->cor == VERMELHO) {
+                irmao->cor = PRETO;
+                x->pai->cor = VERMELHO;
+                rotacaoDireita(arvore, x->pai);
+                irmao = x->pai->esquerda;
             }
-            if (s->right->color == PRETO && s->left->color == PRETO) {
-                s->color = VERMELHO;
-                x = x->parent;
+            if (irmao->direita->cor == PRETO && irmao->esquerda->cor == PRETO) {
+                irmao->cor = VERMELHO;
+                x = x->pai;
             } else {
-                if (s->left->color == PRETO) {
-                    s->right->color = PRETO;
-                    s->color = VERMELHO;
-                    leftRotate(t, s);
-                    s = x->parent->left;
+                if (irmao->esquerda->cor == PRETO) {
+                    irmao->direita->cor = PRETO;
+                    irmao->cor = VERMELHO;
+                    rotacaoEsquerda(arvore, irmao);
+                    irmao = x->pai->esquerda;
                 }
-                s->color = x->parent->color;
-                x->parent->color = PRETO;
-                s->left->color = PRETO;
-                rightRotate(t, x->parent);
-                x = t->root;
+                irmao->cor = x->pai->cor;
+                x->pai->cor = PRETO;
+                irmao->esquerda->cor = PRETO;
+                rotacaoDireita(arvore, x->pai);
+                x = arvore->raiz;
             }
         }
     }
-    x->color = PRETO;
+    x->cor = PRETO;
 }
 
 // Remoção Principal
-void remover(RBTree *t, int data) {
-    Node *z = t->TNULL;
-    Node *x, *y;
-    Node *temp = t->root;
+void remover(ArvoreRB *arvore, int valor) {
+    No *z = arvore->TNULL;
+    No *x, *y;
+    No *temp = arvore->raiz;
 
     // Buscar o nó a ser removido
-    while (temp != t->TNULL) {
-        if (temp->data == data) {
+    while (temp != arvore->TNULL) {
+        if (temp->valor == valor) {
             z = temp;
             break;
         }
-        if (temp->data <= data) {
-            temp = temp->right;
+        if (temp->valor <= valor) {
+            temp = temp->direita;
         } else {
-            temp = temp->left;
+            temp = temp->esquerda;
         }
     }
 
-    if (z == t->TNULL) {
-        printf("Valor %d nao encontrado na arvore.\n", data);
+    if (z == arvore->TNULL) {
+        printf("Valor %d nao encontrado na arvore.\n", valor);
         return;
     }
 
     y = z;
-    int y_original_color = y->color;
+    int cor_original_y = y->cor;
 
-    if (z->left == t->TNULL) {
-        x = z->right;
-        transplant(t, z, z->right);
-    } else if (z->right == t->TNULL) {
-        x = z->left;
-        transplant(t, z, z->left);
+    if (z->esquerda == arvore->TNULL) {
+        x = z->direita;
+        transplantar(arvore, z, z->direita);
+    } else if (z->direita == arvore->TNULL) {
+        x = z->esquerda;
+        transplantar(arvore, z, z->esquerda);
     } else {
-        y = minimum(t, z->right);
-        y_original_color = y->color;
-        x = y->right;
-        if (y->parent == z) {
-            x->parent = y;
+        y = minimo(arvore, z->direita);
+        cor_original_y = y->cor;
+        x = y->direita;
+        if (y->pai == z) {
+            x->pai = y;
         } else {
-            transplant(t, y, y->right);
-            y->right = z->right;
-            y->right->parent = y;
+            transplantar(arvore, y, y->direita);
+            y->direita = z->direita;
+            y->direita->pai = y;
         }
-        transplant(t, z, y);
-        y->left = z->left;
-        y->left->parent = y;
-        y->color = z->color;
+        transplantar(arvore, z, y);
+        y->esquerda = z->esquerda;
+        y->esquerda->pai = y;
+        y->cor = z->cor;
     }
     
     free(z); // Libera memória do nó removido
 
-    if (y_original_color == PRETO) {
-        removerFixUp(t, x);
+    if (cor_original_y == PRETO) {
+        balancearRemocao(arvore, x);
     }
-    printf("Valor %d removido com sucesso.\n", data);
+    printf("Valor %d removido com sucesso.\n", valor);
 }
 
 // Busca Simples
-Node* buscar(RBTree *t, Node *node, int data) {
-    if (node == t->TNULL || data == node->data) {
-        return node;
+No* buscar(ArvoreRB *arvore, No *no, int valor) {
+    if (no == arvore->TNULL || valor == no->valor) {
+        return no;
     }
-    if (data < node->data) {
-        return buscar(t, node->left, data);
+    if (valor < no->valor) {
+        return buscar(arvore, no->esquerda, valor);
     }
-    return buscar(t, node->right, data);
+    return buscar(arvore, no->direita, valor);
 }
 
 // Impressão (V = Vermelho, P = Preto)
-void preOrdem(RBTree *t, Node *node) {
-    if (node != t->TNULL) {
-        printf("%d(%c) ", node->data, (node->color == VERMELHO) ? 'V' : 'P');
-        preOrdem(t, node->left);
-        preOrdem(t, node->right);
+void preOrdem(ArvoreRB *arvore, No *no) {
+    if (no != arvore->TNULL) {
+        printf("%d(%c) ", no->valor, (no->cor == VERMELHO) ? 'V' : 'P');
+        preOrdem(arvore, no->esquerda);
+        preOrdem(arvore, no->direita);
     }
 }
 
-void emOrdem(RBTree *t, Node *node) {
-    if (node != t->TNULL) {
-        emOrdem(t, node->left);
-        printf("%d(%c) ", node->data, (node->color == VERMELHO) ? 'V' : 'P');
-        emOrdem(t, node->right);
+void emOrdem(ArvoreRB *arvore, No *no) {
+    if (no != arvore->TNULL) {
+        emOrdem(arvore, no->esquerda);
+        printf("%d(%c) ", no->valor, (no->cor == VERMELHO) ? 'V' : 'P');
+        emOrdem(arvore, no->direita);
     }
 }
 
-void posOrdem(RBTree *t, Node *node) {
-    if (node != t->TNULL) {
-        posOrdem(t, node->left);
-        posOrdem(t, node->right);
-        printf("%d(%c) ", node->data, (node->color == VERMELHO) ? 'V' : 'P');
+void posOrdem(ArvoreRB *arvore, No *no) {
+    if (no != arvore->TNULL) {
+        posOrdem(arvore, no->esquerda);
+        posOrdem(arvore, no->direita);
+        printf("%d(%c) ", no->valor, (no->cor == VERMELHO) ? 'V' : 'P');
     }
 }
 
 // Menu Interativo
-void menu(RBTree *t) {
+void menu(ArvoreRB *arvore) {
     int opcao, valor;
-    Node* res;
+    No* res;
     
     do {
         printf("\n\n=== ARVORE RUBRO-NEGRA ===\n");
@@ -371,33 +374,33 @@ void menu(RBTree *t) {
             case 1:
                 printf("Digite o valor para inserir: ");
                 scanf("%d", &valor);
-                inserir(t, valor);
+                inserir(arvore, valor);
                 break;
             case 2:
                 printf("Digite o valor para remover: ");
                 scanf("%d", &valor);
-                remover(t, valor);
+                remover(arvore, valor);
                 break;
             case 3:
                 printf("Digite o valor para buscar: ");
                 scanf("%d", &valor);
-                res = buscar(t, t->root, valor);
-                if (res != t->TNULL)
-                    printf("Valor %d ENCONTRADO (Cor: %s).\n", valor, (res->color == VERMELHO ? "Vermelho" : "Preto"));
+                res = buscar(arvore, arvore->raiz, valor);
+                if (res != arvore->TNULL)
+                    printf("Valor %d ENCONTRADO (Cor: %s).\n", valor, (res->cor == VERMELHO ? "Vermelho" : "Preto"));
                 else
                     printf("Valor %d NAO encontrado.\n", valor);
                 break;
             case 4:
                 printf("Pre-Ordem: ");
-                preOrdem(t, t->root);
+                preOrdem(arvore, arvore->raiz);
                 break;
             case 5:
                 printf("Em-Ordem: ");
-                emOrdem(t, t->root);
+                emOrdem(arvore, arvore->raiz);
                 break;
             case 6:
                 printf("Pos-Ordem: ");
-                posOrdem(t, t->root);
+                posOrdem(arvore, arvore->raiz);
                 break;
             case 0:
                 printf("Saindo...\n");
@@ -409,9 +412,8 @@ void menu(RBTree *t) {
 }
 
 int main() {
-    RBTree *arvore = criarArvore();
+    ArvoreRB *arvore = criarArvore();
     menu(arvore);
     
-    // (Opcional) Implementar função para liberar memória total da árvore aqui
     return 0;
 }
