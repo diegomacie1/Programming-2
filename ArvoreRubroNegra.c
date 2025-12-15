@@ -412,6 +412,5 @@ int main() {
     RBTree *arvore = criarArvore();
     menu(arvore);
     
-    // (Opcional) Implementar função para liberar memória total da árvore aqui
     return 0;
 }
