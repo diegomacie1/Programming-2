@@ -1,3 +1,25 @@
+/*
+====================================================================
+    UNIVERSIDADE FEDERAL DO AMAPÁ – UNIFAP
+    Curso: Bacharelado em Ciência da Computação
+    Disciplina: Programação II
+
+    TRABALHO PRÁTICO – ÁRVORE RUBRO NEGRA
+
+    Objetivo:
+        Implementação de uma Árvore Rubro Negra com operações de:
+        - Inserção de valores
+        - Busca de valores
+        - Remoção de nós
+        - Percursos (pré-ordem, em ordem e pós-ordem)
+
+    Integrantes do grupo:
+        1 - Diego Maciel
+        2 - Márleson Ferreira
+        3 - Lucas
+====================================================================
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 
