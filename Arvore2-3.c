@@ -1,3 +1,25 @@
+/*
+====================================================================
+    UNIVERSIDADE FEDERAL DO AMAPÁ – UNIFAP
+    Curso: Bacharelado em Ciência da Computação
+    Disciplina: Programação II
+
+    TRABALHO PRÁTICO – ÁRVORE 2-3
+
+    Objetivo:
+        Implementação de uma Árvore 2-3 com operações de:
+        - Inserção de valores
+        - Busca de valores
+        - Remoção de nós
+        - Percursos (em ordem e por nível)
+
+    Integrantes do grupo:
+        1 - Diego Maciel
+        2 - Márleson Ferreira
+        3 - Lucas
+====================================================================
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
