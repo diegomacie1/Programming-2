@@ -22,11 +22,13 @@ void bucketSort(float arr[], int tamanho) {
 
     // Ordena cada balde e junta tudo
     int indice_original = 0;
+    // Para ordenação em ordem decrescente -> (int i = num_baldes - 1; i >= 0; i--)
     for (int i = 0; i < num_baldes; i++) {
         // Ordenação por inserção (Insertion Sort) dentro do balde
         for (int j = 1; j < qtd_por_balde[i]; j++) {
             float chave = baldes[i][j];
             int k = j - 1;
+            // Para ordenação em ordem decrescente -> (k >= 0 && baldes[i][k] < chave)
             while (k >= 0 && baldes[i][k] > chave) {
                 baldes[i][k + 1] = baldes[i][k];
                 k--;
