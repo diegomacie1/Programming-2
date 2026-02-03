@@ -19,7 +19,7 @@ void countingSortParaRadix(int arr[], int tamanho, int exp) {
     // Monta o array de saída (Percorrendo de trás para frente para manter estabilidade)
     for (int i = tamanho - 1; i >= 0; i--){
         int digito = (arr[i] / exp) % 10; // Extrai o digito específico da posição que estamos ordenando
-        saida[contagem[(arr[i] / exp) % 10] - 1] = arr[i];
+        saida[contagem[digito] - 1] = arr[i];
         contagem[digito]--; // Decrementa a posição do dígito
     }
 
