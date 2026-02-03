@@ -1,45 +1,82 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-void countingSort(int arr[], int tamanho) {
-    // Encontra o maior valor para saber o tamanho do array de contagem
-    int maior = arr[0];
-    for (int i = 1; i < tamanho; i++) {
-        if (arr[i] > maior) maior = arr[i];
+void counting_sort(int *A, int n)
+{
+    if (n <= 1)
+        return;
+
+    // 1) achar min e max
+    int min = A[0], max = A[0];
+    for (int i = 1; i < n; i++)
+    {
+        if (A[i] < min)
+            min = A[i];
+        if (A[i] > max)
+            max = A[i];
     }
 
-    // Cria o array de contagem (VLA) e inicializa com zeros
-    // Importante: funciona apenas para números não-negativos
-    int contagem[maior + 1];
-    for (int i = 0; i <= maior; ++i) contagem[i] = 0;
+    int k = max - min + 1;
 
-    // Frequência: Conta quantas vezes cada número aparece
-    for (int i = 0; i < tamanho; i++) {
-        contagem[arr[i]]++;
+    // 2) vetor de contagem C (inicializado com zero)
+    int *C = (int *)calloc(k, sizeof(int));
+    if (!C)
+    {
+        perror("calloc");
+        exit(1);
     }
 
-    // Reescrita: Coloca os valores de volta no array original em ordem
-    int indice_atual = 0;
-    for (int i = 0; i <= maior; i++) {
-        while (contagem[i] > 0) {
-            arr[indice_atual++] = i;
-            contagem[i]--;
-        }
+    // 3) contar ocorrências
+    for (int i = 0; i < n; i++)
+    {
+        C[A[i] - min]++;
     }
+
+    // 4) prefix sum (acumulada)
+    for (int i = 1; i < k; i++)
+    {
+        C[i] += C[i - 1];
+    }
+
+    // 5) vetor auxiliar B
+    int *B = (int *)malloc(n * sizeof(int));
+    if (!B)
+    {
+        perror("malloc");
+        free(C);
+        exit(1);
+    }
+
+    // 6) preencher B de trás pra frente (estável)
+    for (int i = n - 1; i >= 0; i--)
+    {
+        int idx = A[i] - min;
+        int pos = C[idx] - 1;
+        B[pos] = A[i];
+        C[idx]--;
+    }
+
+    // 7) copiar de volta para A
+    for (int i = 0; i < n; i++)
+    {
+        A[i] = B[i];
+    }
+
+    free(B);
+    free(C);
 }
 
-int main() {
-    // Exemplo de teste
-    int meu_array[] = {4, 2, 2, 8, 3, 3, 1};
-    int n = sizeof(meu_array) / sizeof(meu_array[0]);
+int main(void)
+{
+    int A[] = {4, 2, 2, 8, 3, 3, 1};
+    int n = (int)(sizeof(A) / sizeof(A[0]));
 
-    printf("Array antes da ordenacao: ");
-    for(int i = 0; i < n; i++) printf("%d ", meu_array[i]);
+    counting_sort(A, n);
 
-    countingSort(meu_array, n);
-
-    printf("\nArray depois do Counting Sort: ");
-    for(int i = 0; i < n; i++) printf("%d ", meu_array[i]);
+    for (int i = 0; i < n; i++)
+    {
+        printf("%d ", A[i]);
+    }
     printf("\n");
-
     return 0;
 }
