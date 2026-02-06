@@ -68,11 +68,12 @@ void counting_sort(int *A, int n)
 
 int main(void)
 {
-    int A[] = {4, 2, 2, 8, 3, 3, 1};
+    int A[] = {4, 2, 2, -8, 3, -3, 1};
     int n = (int)(sizeof(A) / sizeof(A[0]));
 
     counting_sort(A, n);
 
+    printf("\nArray depois do Counting Sort: ");
     for (int i = 0; i < n; i++)
     {
         printf("%d ", A[i]);
